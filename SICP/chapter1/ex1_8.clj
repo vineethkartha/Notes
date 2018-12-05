@@ -1,12 +1,13 @@
 
 (defn sqr [x] (* x x))
+(defn cube [x] (* x x x))
 
 (defn improve [guess x]
-  (/ (+ (/ x (sqr guess)) (* 2 guess)) 3.0)
+  (/ (+ (/ x (sqr guess)) guess guess) 3.0)
   )
 
 (defn good-en [guess x]
-  (< (Math/abs (- (sqr guess) (sqr (improve guess x)))) 0.001)
+  (< (Math/abs (- (cube guess) (cube (improve guess x)))) 1)
   )
 (defn cubrt-iter [guess x]
   (if (good-en guess x)
