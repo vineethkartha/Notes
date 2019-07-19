@@ -1,0 +1,53 @@
+#+TITLE:Effective Modern C++ Notes
+* Chapter 1 - Deducing Types
+** Item 1 - Understand template type deduction
+*** The Rules
+    #+BEGIN_SRC C++
+    template<typename T>
+    void f(ParamType param);
+   #+END_SRC
+   Consider the above template function, which is exercised as below
+   #+BEGIN_SRC C++
+   f(expr);
+   #+END_SRC
+   Then the following rules of template deduction are used:
+   1. When void f(T& param)
+      In this scenario if expr is a reference ignore the reference part
+   2. When void f(T&& Param)
+      In this scenario if expr is lvalue then ParamType is lvalue Reference
+   3. When void f(T param)
+      In this case from expr constness, reference and volatile is ignored
+*** A side note
+    For array arguments if the ParamType is pass by value the passing name of array is deduced as pointer. However if the ParamType is a reference then the deduced type is a reference to an array of given size.
+** Item 2 - Understand auto type deduction
+*** The type deduction with auto is as same as template type deduction
+*** The exception is with auto x = {23}. 
+    This results in a type dedcution of std::initializer_list, whereas the template type deduction does not consider this as initializer_list
+* Chapter 4 - Smart Pointers
+** Item 18 - Unique pointers
+** Item 19 - Shared pointers
+*** std::shared_ptr retains a count of how many pointers are referring to the same resource.
+*** Their size will be twice the size of raw pointers as they maintain reference count.
+*** The ref count is dynamically allocated unless the shared_ptr is constructed by make_shared
+*** shared_ptr can have custom deleter but these need not be part of the type
+    #+BEGIN_SRC C++
+    std::shared_ptr<MyClass> ptr(new MyClass, customdelFcn);
+    #+END_SRC
+*** custom deleter does not change the size of the shared_ptr
+*** The extra information of shared_ptr is kept in a control block
+*** A control block is created when:
+    1. A shared_ptr is created with make_shared
+    2. A shared_ptr is created from unique_ptr
+    3. A shared_ptr is created from a raw
+*** Hence it is recommended to avoid code as shown below:
+    #+BEGIN_SRC C++
+    auto p = new MyClass; // creates a raw pointer p
+    std::shared<MyClass> sw1(p,customDel);
+    std::shared<MyClass> sw2(p,customDel);
+    #+END_SRC
+    This will create two control blocks for the resource in p
+*** Instead write the code as shown below
+    #+BEGIN_SRC C++
+    std::shared<MyClass> sw1(new MyClass,customDel);
+    std::shared<MyClass> sw2(sw1);
+    #+END_SRC
