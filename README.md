@@ -1,2 +1,2 @@
-# Solutions-for-TextBook-Exercises
-This repo contains solutions to exercises from various text books
+# Notes
+This repo contains notes and solutions to exercises from various text books
