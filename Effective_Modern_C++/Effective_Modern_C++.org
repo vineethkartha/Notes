@@ -31,84 +31,287 @@
 *** The ref count is dynamically allocated unless the =shared_ptr= is constructed by =make_shared=
 *** =shared_ptr= can have custom deleter but these need not be part of the type
     #+BEGIN_SRC C++
-    std::shared_ptr<MyClass> ptr(new MyClass, customdelFcn);
+      std::shared_ptr<MyClass> ptr(new MyClass, customdelFcn);
     #+END_SRC
-*** custom deleter does not change the size of the =shared_ptr=
-*** The extra information of shared_ptr is kept in a control block
-*** A control block is created when:
-    1. A =shared_ptr= is created with =make_shared=
-    2. A =shared_ptr= is created from =unique_ptr=
-    3. A =shared_ptr= is created from a raw
-**** Hence it is recommended to avoid code as shown below:
-     #+BEGIN_SRC C++
-     auto p = new MyClass; // creates a raw pointer p
-     std::shared<MyClass> sw1(p,customDel);
-     std::shared<MyClass> sw2(p,customDel);
-     #+END_SRC
-     This will create two control blocks for the resource in p. Instead write the code as shown below
+*** custom deleter does not change the size of the =shared_ptr=  
+*** Control Blocks
+**** The extra information of shared_ptr is kept in a control block
+***** A control block is created when:
+      1. A =shared_ptr= is created with =make_shared=
+      2. A =shared_ptr= is created from =unique_ptr=
+      3. A =shared_ptr= is created from a raw
+***** Hence it is recommended to avoid code as shown below:
       #+BEGIN_SRC C++
-      std::shared<MyClass> sw1(new MyClass,customDel);
-      std::shared<MyClass> sw2(sw1);
+        auto p = new MyClass; // creates a raw pointer p
+        std::shared<MyClass> sw1(p, customDel);
+        std::shared<MyClass> sw2(p,customDel);
       #+END_SRC
-**** Another scenario that can cause a problem with multiple control blocks is as shown here:
-     #+begin_src C++
-     #include<iostream>
-     #include<memory>
-     #include<vector>
-     class A;
-     std::vector<std::shared_ptr<A>> AVector;
-     
-     class A {
-       public:
-         A() {
-           std::cout<<"cstr\n";
-         }
-         ~A() {
-           std::cout<<"dstr\n";
-         }
-         void AddToAVector() {
-           AVector.emplace_back(this);
-         }
-     };
+      This will create two control blocks for the resource in p. Instead write the code as shown below
+       #+BEGIN_SRC C++
+         std::shared<MyClass> sw1(new MyClass,customDel);
+         std::shared<MyClass> sw2(sw1);
+       #+END_SRC
+***** Another scenario that can cause a problem with multiple control blocks is as shown here:
+      #+begin_src C++
+        #include <iostream>
+        #include <memory>
+        #include <vector>
+        class A;
+        std::vector<std::shared_ptr<A>> AVector;
 
-     int main() {
-        auto a_ptr = std::make_shared<A>();
-       //a_ptr->AddToAVector(); // freeing of this pointer casuses a crash
-     }
-     #+end_src
-**** We can get this code to work with the code below
-     #+begin_src C++
-     #include<iostream>
-     #include<memory>
-     #include<vector>
-     class A;
-     std::vector<std::shared_ptr<A>> AVector;
-     
-     class A: public std::enable_shared_from_this<A>{
-       public:
-         A() {
-           std::cout<<"cstr\n";
-         }
-         ~A() {
-           std::cout<<"dstr\n";
-         }
-         void AddToAVector() {
-           AVector.emplace_back(shared_from_this());
-         }
-     };
+        class A {
+          public:
+            A() {
+                std::cout << "cstr\n";
+            }
+            ~A() {
+                std::cout << "dstr\n";
+            }
+            void AddToAVector() {
+                AVector.emplace_back(this);
+            }
+        };
 
-     int main() {
-        auto a_ptr = std::make_shared<A>();
-        //auto a_ptr = new A; if the above line is replaced with this line then an exception is thrown
-        /*
-        terminate called after throwing an instance of 'std::bad_weak_ptr'
-        what():  bad_weak_ptr
-        Abort
-        */
-        a_ptr->AddToAVector(); 
-     }
-     #+end_src
-     but for this code to work there must be an existing control block, because =shared_from_this= looks for the existing control block and creates a new =std::shared_ptr=. So for classes that derive from =std::enable_shared_from_this=, the constructors must be made private and have a factory kind of function that creates and returns a =std::shared_ptr=
+        int main() {
+            auto a_ptr = std::make_shared<A>();
+            // a_ptr->AddToAVector(); // freeing of this pointer casuses a crash
+        }
+      #+end_src
+***** We can get this code to work with the code below
+      #+begin_src C++
+        #include <iostream>
+        #include <memory>
+        #include <vector>
+        class A;
+        std::vector<std::shared_ptr<A>> AVector;
+
+        class A : public std::enable_shared_from_this<A> {
+          public:
+            A() {
+                std::cout << "cstr\n";
+            }
+            ~A() {
+                std::cout << "dstr\n";
+            }
+            void AddToAVector() {
+                AVector.emplace_back(shared_from_this());
+            }
+        };
+
+        int main() {
+            auto a_ptr = std::make_shared<A>();
+            // auto a_ptr = new A; if the above line is replaced with this line then an exception is thrown
+            /*
+            terminate called after throwing an instance of 'std::bad_weak_ptr'
+            what():  bad_weak_ptr
+            Abort
+            ,*/
+            a_ptr->AddToAVector();
+        }
+      #+end_src
+      but for this code to work there must be an existing control block, because =shared_from_this= looks for the existing control block and creates a new =std::shared_ptr=. So for classes that derive from =std::enable_shared_from_this=, the constructors must be made private and have a factory kind of function that creates and returns a =std::shared_ptr=
 *** Points to remember:
 **** If in doubt whether to create a =shared_ptr= always create a =unique_ptr= because a =unique_ptr= can always be converted to =shared_ptr=
 **** =shared_ptr= does not support arrays, and you should not be using arrays when other STL containers are available.
+** Item 20 - Use =std::weak_ptr= for =std::shared_ptr= like pointers that can dangle
+*** An =std::weak_ptr= is like a =std::shared_ptr= but it does not affect the reference count.
+**** Such a smart pointer should be able to detect when the object it was pointing has been destroyed.
+    #+begin_src C++ :results verbatim
+      #include <iostream>
+      #include <memory>
+      struct myPair {
+          int num1, num2;
+      };
+      int main() {
+          // create a shared pointer and see its ref count
+          auto spw = std::make_shared<myPair>();
+          std::cout << "The reference count from shared_ptr is: " << spw.use_count() << "\n";
+          // create a weak_ptr from the above shared_ptr and notice that
+          // the ref count has not increased.
+          std::weak_ptr<myPair> wpw(spw);
+          std::cout << "The reference count from weak_ptr is: " << wpw.use_count() << "\n";
+
+          // destroy the object pointed to by shared_ptr
+          spw = nullptr;
+
+          if (wpw.expired()) {
+              std::cout << "The weak_pointer expired and count is: " << wpw.use_count() << "\n";
+          }
+          return 0;
+      }
+    #+end_src
+**** the *lock* is equivalent to checking if =std::shared_ptr::use_count ()= == 0
+*** =std::weak_ptr::lock=
+**** The  =weak_ptr= does not have a mechanism to dereference directly. 
+**** This is because typically the client would try to check if the =weak_ptr= is expired and if not it will try to dereference
+**** Now imagine a multi-threading scenario where the one thread has queried for the expired() and received false and before this thread dereferences, a second thread expires the =weak_ptr=.
+**** So we have an atomic operation =std::weak_ptr::lock=
+    #+begin_src C++ :results verbatim
+    #include<iostream>
+    #include<memory>
+    #include<assert.h>
+
+    struct myPair {
+     int num1,num2;
+     myPair(int n1,int n2):num1(n1),num2(n2) {};
+    };
+
+    int main() {  
+      // create a shared pointer and see its ref count
+      auto spw = std::make_shared<myPair>(1,2);
+      // create a weak_ptr from the above shared_ptr
+      std::weak_ptr<myPair> wpw(spw);
+
+      std::cout<<"The reference count in main is: "<<spw.use_count()<<"\n";
+      
+      //A new block to create a shared pointer
+      {
+        auto spw1 = wpw.lock();
+        std::cout<<"The pair is: "<<spw1->num1<<", "<<spw1->num2<<"\n";
+        std::cout<<"The reference countin sub block is: "<<spw.use_count()<<"\n";
+      }
+      
+      std::cout<<"The reference count in main is: "<<spw.use_count()<<"\n";
+      // destroy the object pointed to by shared_ptr
+      spw = nullptr;
+      if(wpw.expired()) {
+        std::cout<<"The weak_pointer expired and count is: "<<wpw.use_count()<<"\n";
+      }
+
+      // lock returning nullptr
+      auto spw2 = wpw.lock();
+      assert(spw2 == nullptr);
+
+      // creating a shared pointer from an expired weak pointer throws exception
+      try {
+          std::shared_ptr<myPair> spw3(wpw);  //this throws std::bad_weak_ptr
+      } catch(const std::exception& e) {
+        std::cout<<"The exception is : "<<e.what()<<"\n";
+      }
+      return 0;
+    }
+    #+end_src
+*** The need for =std::weak_ptr=
+** Item 21 - Prefer =std::make_unique= and =std::make_shared= to the direct use of new
+*** The =std::make _unique= was introduced only in C++14, but however in C++11 you can create it with the following code
+    #+begin_src C++
+    template<typename T, typename... Ts>
+    std::unique_ptr<T> make_unique(Ts&&... params) {
+      return std::unique_ptr<T>(new T(std::forward<Ts>(params)...));
+    }
+    #+end_src
+*** Reasons to use the make* functions
+**** Code simplicity with using the make* functions
+     #+begin_src C++
+     #include<iostream>
+     #include<memory>
+
+     struct MyClass {
+       int n;
+     };
+    
+     int main() {
+       auto uniqPtr(std::make_unique<MyClass>());
+
+       std::unique_ptr<MyClass> uniqPtr2(new MyClass);
+      
+       return 0;
+     }
+     #+end_src
+     We can use /auto/ to declare unique pointers.
+**** Exception safety 
+     #+begin_src C++
+     class MyClass{};
+     int funcThatThrows(); 
+     int processFun(std::shared_ptr<MyClass> ptr, int num) 
+     
+     int main() {
+       processFun(std::shared_ptr<MyClass>(new MyClass), funcThatThrows());
+       return 0;
+     } 
+     #+end_src
+     Here the call to /processFun/ to be evaluated we need the following statements to execute
+       1. /new MyClass/ has to be execute
+       2. construct the =std::shared_ptr= from the /new MyClass/
+       3. funcThatThrows needs to be called.
+     Out of these three calls 1 and 2 will be sequential but there is no guarantee how 3 will be called.
+     it can either be 3->1->2 or 1->2->3 in which case we have no problem, but a third possibility is 
+     1->3->2, in which case if 3 throws an exception then the new MyClass will result in a leak
+     #+begin_src C++
+     class MyClass{};
+     int main() {
+       processFun(std::make_shared<MyClass>(), funcThatThrows());
+       return 0;
+     } 
+     #+end_src
+     In this case either =make_shared= will be called or funcThatThrows, this will not result in a leak
+**** Reducing the number of memory allocations
+     #+begin_src C++
+     std::shared_ptr<Widget> spw(new Widget)
+     #+end_src
+     Here the /new Widget/ allocates memory for the Widget object
+     Then a second allocation is performed for the [[Control Blocks]] by the constructor of the =std::shared_ptr=  
+     By using the make* functions the allocation is performed in one shot.
+       1. This reduces the static size of the program
+       2. It gets faster at execution time as allocation is performed only once
+*** Scenarios where the =make_shared= and =make_unique= cannot be used.
+**** Cannot use custom deleter
+***** unique pointer and shared pointers have constructors that take a custom deleter function
+***** The make functions cannot be used if you need to have custom deleters for your smart pointers
+**** Behavior with =std::initializer_list=
+***** Consider the code shown below:
+      #+begin_src C++ :results output
+        #include<iostream>
+        #include<memory>
+
+        struct MyClass {
+            int iVal;
+            bool bVal;
+            MyClass(int v, bool b) {
+                std::cout << "Cstr with int and bool\n";
+            }
+            MyClass(std::initializer_list<int> il) {
+                std::cout << "Cstr with initializer_list\n";
+            }
+        };
+
+        int main() {
+            MyClass obj1(10, true);
+            MyClass obj2{10, true};
+            auto spv = std::make_shared<MyClass>(10, true);
+            // Next two lines show how to use the initializer list workaround
+            auto initList = {10, 20};
+            auto spv1 = std::make_shared<MyClass>(initList);
+            return 0;
+        }
+      #+end_src
+      #+RESULTS:
+      : Cstr with int and bool
+      : Cstr with initializer_list
+      : Cstr with int and bool
+      : Cstr with initializer_list
+      The make functions use the parentheses to perfect forward the arguments. This is because braces cannot be used for perfect forwarding
+*** Scenarios specific to =make_shared= where it cannot be used
+**** If classes define there own versions of the /new/ and /delete/ operator then it is a bad idea to use the =make_shared=
+**** Class specific methods allocate and deallocate memory specific to the size of the class
+***** With shared pointers this is not enough because the control blocks are also allocated.
+***** =make_shared= will allocate the object and the control block in the same chunk of memory.
+***** When the reference count in the control block goes to zero the object can be destroyed, however the memory cannot be released until the control block also has been destroyed.
+***** A control block is refered to by both the =shared_ptr= and the =weak_ptr=. The =weak_ptr= check the reference count in the control block to decide if it has expired or not.
+***** So the memory allocated cannot be freed until the last =shared_ptr= and =weak_ptr= have been destroyed.
+*** How to get exception safety without the =make_shared=
+**** In case you need to use the /new/ and still achieve exception safety
+     #+begin_src C++
+       class MyClass {};
+       int funcThatThrows();
+       int processFun(std::shared_ptr<MyClass> ptr, int num);
+
+       int main() {
+           std::shared_ptr<MyClass> spw(new MyClass);
+           processFun(spw, funcThatThrows());
+           return 0;
+       }
+     #+end_src
+***** However in this case we are passing an lvalue to the processFun, whereas previously it was an rvalue.
+      This means that there could be some performance hit and this could be even more amplified for shared pointer because 
+      shared pointer needs an atomic operation for copy and needs to update the reference count, where as for the rvalue case it was just a move operation.
