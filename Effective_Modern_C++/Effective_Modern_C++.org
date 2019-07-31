@@ -313,4 +313,107 @@
        }
        #+end_src
      However in this case we are passing an lvalue to the processFun, whereas previously it was an rvalue. This means that there could be some performance hit and this could be even more amplified for shared pointer because shared pointer needs an atomic operation for copy and needs to update the reference count, where as for the rvalue case it was just a move operation.
-     
+** Item 22 - When using the PImpl Idiom define special functions in the implementation file
+   The *Pointer to Implementation* or the *PImpl* idiom is used to solve compilation dependency overheads. 
+*** PImpl
+    Consider the code given below:
+    #+begin_src C++ :results output 
+    //Widget.hpp
+      #include <vector>
+      #include "gadget.hpp"
+      class widget {
+        public:
+          widget();
+          ~widget();
+
+        private:
+          std::vector<int> v1;
+          Gadget g1;
+      };
+    #+end_src
+    This code depends on the *gadget.hpp* file. If this file undergoes frequent changes then the *widget.hpp* will also have to be recompiled and so will all client files that include the *widget.hpp* file. In order to prevent such compilation we use the PImpl idiom. Here all the members of the widget class will be moved to another struct/class and there will be a pointer to this implementation in the widget class. The code will look like as shown here:
+    #+begin_src C++ :results output 
+    //Widget.hpp
+      class widget {
+        public:
+          widget();
+          ~widget();
+
+        private:
+          struct Impl;
+          Impl *pImpl;
+      };
+    #+end_src
+    As you can see the *widget.hpp* no longer needs to include the gadget.hpp and the vector.hpp. The implementation file or the *widget.cpp* will be as shown below:
+    #+begin_src C++ :results output 
+    // widget.cpp
+      #include "widget.hpp"
+      #include "gadget.hpp"
+      #include <vector>
+      struct widget::Impl {
+          std::vector<int> v1;
+          Gadget g1;
+      };
+      widget::widget()
+          : pImpl(new Impl) {
+      }
+      widget::widget() {
+          delete pImpl;
+      }
+    #+end_src
+    With this implementation even if the gadget class changes the clients that include the widget.hpp file will not need to recompile. But however notice that the widget implementation now uses raw pointers. 
+*** Using =unique_ptr= for PImpl
+   It is quite simple to convert this code to use the =std::unique_ptr=
+   #+begin_src C++ :results output 
+    //Widget.hpp
+      #include<memory>
+      class widget {
+        public:
+          widget();
+          ~widget();
+
+        private:
+          struct Impl;
+          std::unique_ptr<Impl> pImpl;
+      };
+    #+end_src
+    #+begin_src C++ :results output 
+    // widget.cpp
+      #include "widget.hpp"
+      #include "gadget.hpp"
+      #include <vector>
+      struct widget::Impl {
+          std::vector<int> v1;
+          Gadget g1;
+      };
+      widget::widget()
+          : pImpl(std::make_unique<Impl>()) {
+      }
+    #+end_src
+    In this code we do not need any statement in widget destructor because the =std::unique_ptr= will take care of deleting to whatever it is pointing to when it goes out of scope.
+    However a simple client code as shown below will fail to compile
+    #+begin_src C++ :results output 
+      #include "widget.hpp"
+      int main() {
+          widget w;
+      }
+    #+end_src
+    This code fails to compile because when the destructor to widget is called the default destructor kicks in and this in turn calls the default deleter in the =unique_ptr=, which does a static assert check for incomplete types. Now the assert fails because the point at which the destructor code is located it does not have full information regarding the *Impl*. In order to avoid this issue, the right thing to do is to have only the destructor definition in the header file and to define the default destructor in the implementation file after the *struct Impl* has been defined.
+    The implementation file will look as shown below:
+    #+begin_src C++ :results output 
+    // widget.cpp
+      #include "widget.hpp"
+      #include "gadget.hpp"
+      #include <vector>
+      struct widget::Impl {
+          std::vector<int> v1;
+          Gadget g1;
+      };
+      widget::widget()
+          : pImpl(std::make_unique<Impl>()) {
+      }
+      widget::~widget() = default;
+    #+end_src
+  This same idea is to implemented to the move operations and for the copy operations we need to define our own operations as well.
+*** Using =std::shared_ptr= for PImpl
+    However all these is not needed if using =std::shared_ptr=. This difference is because the unique pointers need the deleter to be part of the type and this leads to smaller and faster code, with the condition that the type cannot be incomplete. However with shared pointers the custom deleter is not part of the type and hence the type can be incomplete. However this might lead to cost and size penalties.
