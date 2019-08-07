@@ -417,3 +417,54 @@
   This same idea is to implemented to the move operations and for the copy operations we need to define our own operations as well.
 *** Using =std::shared_ptr= for PImpl
     However all these is not needed if using =std::shared_ptr=. This difference is because the unique pointers need the deleter to be part of the type and this leads to smaller and faster code, with the condition that the type cannot be incomplete. However with shared pointers the custom deleter is not part of the type and hence the type can be incomplete. However this might lead to cost and size penalties.
+* Chapter 5 - Rvalue References, Move semantics and Perfect forwarding
+  Rvalues cannot be assigned to lvalue references, but they can be assigned to const lvalue references.
+** Item 23 - Understand =std::move= and =std::forward= 
+   =std::move= simply casts the argument to a rvalue reference. The code snippet given below demonstrates this. Here v0 is moved into v1 and hence the move constructor of =std::vector= is called which makes the size of v0 to zero, where with =std::move(v1)= we are not really calling the move constructor we are only casting the lvalue to rvalue reference and hence the size is still not reset to 0.
+   #+begin_src C++ :results output 
+          #include <iostream>
+          #include <vector>
+
+          int main() {
+              std::vector<int> v0{1, 2, 3, 4, 5};
+              auto v1 = std::move(v0);
+              std::move(v1);
+              std::cout << "Size after move op: " << v0.size() << "\n";
+              std::cout << "Size without move op: " << v1.size() << "\n";
+              return 0;
+          }
+   #+end_src
+
+   #+RESULTS:
+   : Size after move op: 0
+   : Size without move op: 5
+
+   #+begin_src C++ :results output 
+     #include <iostream>
+
+     int foo(const int& val) {
+         std::cout<<"const lval ref\n";
+     }
+     int foo(int&& val) {
+         std::cout<<"rval ref\n";
+     }
+
+     int main() {
+         foo(1);
+         int a = 1;
+         foo(a);
+         foo(std::move(a));
+         const int b = 2;
+         foo(std::move(b));
+         return 0;
+     }
+   #+end_src
+
+   #+RESULTS:
+   : rval ref
+   : const lval ref
+   : rval ref
+   : const lval ref
+
+   what happens when the function overload contains move and const lval ref overlaods?
+   pass by value move idiom
