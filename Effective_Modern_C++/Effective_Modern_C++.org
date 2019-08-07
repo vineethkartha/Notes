@@ -448,6 +448,9 @@
      int foo(int&& val) {
          std::cout<<"rval ref\n";
      }
+     int foo(const int&& val) {
+         std::cout<<"const rval ref\n";
+     }
 
      int main() {
          foo(1);
@@ -464,7 +467,7 @@
    : rval ref
    : const lval ref
    : rval ref
-   : const lval ref
+   : const rval ref
 
    what happens when the function overload contains move and const lval ref overlaods?
    pass by value move idiom
