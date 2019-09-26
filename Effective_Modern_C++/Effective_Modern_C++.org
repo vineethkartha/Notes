@@ -471,3 +471,35 @@
 
    what happens when the function overload contains move and const lval ref overlaods?
    pass by value move idiom
+* Chapter 7 - The Concurrency API
+** Item 37 - Make =std:thread= unjoinable on all paths
+   Every =std::thread= is either /joinable/ or /unjoinable/. A joinable thread is one that has an underlying asynchronous thread that is currently executing or waiting to be executed.
+   The threads that are not joinable are:
+   1. Default constructed =std::thread=
+   2. =std::thread= that has been moved from
+   3. =std::thread= that has been joined
+   4. =std::thread= that has been detached.
+   
+   If the destructor of a thread is called before it joined or detached then this can cause the execution to terminate
+   #+begin_src C++ 
+     bool doWork(int Max) {
+         std::vector<int> goodVals;
+         std::thread t([&Max, &goodVals] {
+                           for(auto i =0;i<Max;++i) {
+                               goodVals.push_back(i);
+                           }
+                       });
+         
+         if(ConditionsMet()) {
+             t.join();
+             performComputation(goodVals);
+             return true;
+         }
+         return false;
+     }
+   #+end_src
+*** Possible solutions
+**** Implicit Join 
+     We can make the =std::thread='s destructor wait for the thread to complete before we destroy. But this would mean that doWork has to wait for the thread to complete although ConditionsMet() returned false.
+**** Implicit Detach
+     This will lead to undefined behavior because the thread uses a reference to goodVals which is a local variable in doWork. So if ConditionsMet() returned false, then doWork will exit and the local variable will be destroyed. So if the thread t got detached and is running on its own then it has reference to an already destroyed variable.
