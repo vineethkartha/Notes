@@ -1,0 +1,62 @@
+* Chapter 6 - Lock-based concurrent data structures
+** A thread safe stack using locks
+   #+begin_src C++ :results output 
+     #include <exception>
+     #include <thread>
+     #include <iostream>
+     #include <stack>
+     #include <mutex>
+
+     struct empty_stack : std::exception {
+         const char* what() const throw();
+     };
+
+     template<typename T>
+     class threadsafe_stack {
+       public:
+         threadsafe_stack() {}
+         threadsafe_stack(const threadsafe_stack& other) {
+             std::lock_guard<std::mutex> lock(other.m);
+             data = other.data;
+         }
+         threadsafe_stack& operator=(const threadsafe_stack&) = delete;
+         void push( T new_value) {
+             std::lock_guard<std::mutex> lock(m);
+             data.push(std::move(new_value));
+         }
+
+         std::shared_ptr<T> pop() {
+             std::lock_guard<std::mutex> lock(m);
+             if (data.empty())
+                 throw empty_stack();
+             std::shared_ptr<T> const res(std::make_shared<T>(std::move(data.top())));
+             data.pop();
+             return res;
+         }
+
+         void pop(T& value) {
+             std::lock_guard<std::mutex> lock(m);
+             if(data.empty())
+                 throw empty_stack();
+             value = std::move(data.top());
+             data.pop();
+         }
+    
+         bool empty() const {
+             std::lock_guard<std::mutex> lock(m);
+             return data.empty();
+         }
+
+       private:
+         std::stack<T> data;
+         mutable std::mutex m;
+     };
+
+#+end_src
+ In the above piece of code
+ 1. Each member function is guarded with a mutex so no member functions will have exclusive access.
+ 2. Potential for race condition with =empty= and either of the =pop=, but since the =pop= functions check for the empty condition of the underlying data member and returns the poped value. This would have been problematic if =top= and =pop= were implemented separately
+ 3. Handling exceptions
+      1. locking the mutex - even if this throws it is at the beginning of every function and there are no ops done on the data.
+      2. data.push() - this is guaranteed by =std::stack=
+      3. 
