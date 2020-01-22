@@ -60,3 +60,9 @@
       1. locking the mutex - even if this throws it is at the beginning of every function and there are no ops done on the data.
       2. data.push() - this is guaranteed by =std::stack=
       3. 
+* Chapter 7 - Designing Lock free concurrent data structures
+** Blocking data structures
+   When other threads have to wait for a thread to finish its op and release reasources 
+** Concept of Lock free and wait free ds
+   A lock free data structure is one where more than one thread can access the ds at the same time
+   But this can still result in starvation for one thread.

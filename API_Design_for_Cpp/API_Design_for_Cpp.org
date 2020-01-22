@@ -1,0 +1,66 @@
+* Chapter 2
+** Minimally Complete
+*** Add Virtual functions judiciously
+**** Fragile Base class problem
+     Introducing Virtual functions in your base class allows clients to inherit from the base class and re-implement that function. Later changes to the base class may break the client code.
+**** Clients may break assumptions on the multithreading 
+**** It increases the runtime (negligible)
+**** Increases the size of the object.
+**** Adding, reordering or removing Virtual functions will require full recompile.
+     This is because the virtual functions are stored as offsets in the vtable.
+**** Use the Non Virtual Interface Idiom
+***** Use public interface that is Non Virtual
+***** Make virtual functions private
+***** If the derived classes need base implementation of the virtual functions then make them protected
+***** Base class destructor must be public and virtual or protected and non-virtual
+    #+begin_src c++
+      class Base {
+        private:
+          DataType data_;
+        public:
+          void read_from( std::istream & i)  { // Note non-virtual
+              read_from_impl(i);
+          }
+          void write_to( std::ostream & o) const { // Note non-virtual
+              write_to_impl(o);
+          }
+    
+          virtual ~Base() {}  // Virtual because Base is a polymorphic base class.
+        private:
+          virtual void read_from_impl( std::istream & ) = 0;
+          virtual void write_to_impl( std::ostream & ) const = 0;
+      };
+
+      class XMLReaderWriter : public Base {
+        private:
+          virtual void read_from_impl (std::istream &) {
+              // Read XML.
+          }
+          virtual void write_to_impl (std::ostream &) const {
+              // Write XML.
+          }
+      };
+      class TextReaderWriter : public Base {
+        private:
+          virtual void read_from_impl (std::istream &) {}
+          virtual void write_to_impl (std::ostream &) const {}
+      };
+    #+end_src
+*** Convenience APIs
+**** Keep APIs simple, focused
+     Primitiveness is the quality that an method needs access to the internal details
+**** Convenience APIs are sort of wrappers around the core APIs that simplify the usage
+***** Keep this in separate classes and away from the core APIs.
+**** This is called *progressive disclosure*
+** Easy to Use
+*** Discoverable
+    This means that the clients can figure out about the API on their own.
+    Adding descriptive names without abbreviations can help in this
+*** Difficult to Misuse
+**** Create classes to denote each data type
+**** Prefer using enums to bools
+*** Consistent
+**** Use consistent names and arguments
+**** Use templates and inheritance to achieve consistency
+*** Orthogonal
+**** Functions do not have side-effects
