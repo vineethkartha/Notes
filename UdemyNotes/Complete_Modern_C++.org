@@ -1,9 +1,11 @@
-*  
-
+*  General Notes
 **  Uniform initialization 
    Use {} to initialize any variable also known as value initialization
    Avoid copy initialization which uses =
    1. Value initialization T obj{}
    2. Direct initialization T obj{v}
    3. Copy initialization T obj = v
-
+** References
+   No memory allocated for reference since it is just a name
+   Initializer should be an L value.
+   Reference will always be bound to its referant.
