@@ -1,0 +1,24 @@
+*  General Notes
+**  Uniform initialization 
+   Use {} to initialize any variable also known as value initialization
+   Avoid copy initialization which uses =
+   1. Value initialization T obj{}
+   2. Direct initialization T obj{v}
+   3. Copy initialization T obj = v
+** References
+   No memory allocated for reference since it is just a name
+   Initializer should be an L value.
+   Reference will always be bound to its referant.
+** Const and pointers
+   1. const int *ptr ensures that whatever is pointed to by ptr cannot be changed. Irrespective of whether that data is const or not
+   2. prefer const reference over const pointer.
+** Type Inference
+   The auto keyword is used in C++ to infer types.
+   The auto keyword discards qualifiers. e.g. 
+   #+begin_src c++
+   cont int i = 5;
+   auto j = i; // here j is not const int
+   auto &ref = i; // here the ref is const reference
+   #+end_src
+** Function pointer
+   A function pointer is declared with return_type (*ptr)(args....)

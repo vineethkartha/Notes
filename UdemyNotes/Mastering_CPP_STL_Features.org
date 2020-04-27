@@ -1,54 +1,58 @@
-* Move Semantics
-** Lvalue and Rvalues
-   + Lvalue in C++ represent physical memory.
-     - They can be used on the left side of expressions
-     - They can be bound to lvalue reference
-       #+BEGIN_SRC C++
-       int a;
-       int &ref = a;
-       #+END_SRC
-     - We can get the address of lvalues
-       #+BEGIN_SRC C++
-       int a;
-       int *addr_a = &a;
-       #+END_SRC
-   + Rvalues represent anything that is not Lvalue
-     - They cannot be used on the left side of expression
-     - We cannot get the address of Rvalues
-     - They cannot be bound to lvalue references but from C++11 they can be bound to rvalue references
-       An exception is that rvalues can be bound to const lvalue references
-       #+BEGIN_SRC C++
-       int &&rval_ref = 5;
-       const int &constant_lval = 5;
-       #+END_SRC
-** STD::MOVE
-   + This tells the compiler that we would like to move the resources and transfer the complete ownership to the new lvalue.
-   #+BEGIN_SRC C++
-   std::vector<int> v0 = {1,2,3,4,5};
-   std::vector<int v1 = v0;
-   #+END_SRC
-   + The std::move does a static cast of the given variable to an rvalue reference. It is upto the copy constructor or copy assignment operators of the class to take care of properly transfering the resources.
-   + After the move has been performed it is unsafe to use the original variable on which the move was performed.
-   + We should not perform a std::move on return value from a function if it is returning a local variable. However we can do the std::move if the function is returning a member variable.
-     + This is because such a move can mess up return value optimisation
-   + Use the *Pass by Value and Move* idiom instead of overloading functions with sink arguments.
-** Forwarding references
-* Smart pointer   
-** std::unique_ptr
-   + This is a smart pointer where the underlying object is owned by a single pointer.
-   + unique pointers do not have the copy constructor or copy assignment operator
-   + It uses the move semantics to transfer ownership
-   + Unique pointers shoule be first created before using them as function arguments.
-     #+BEGIN_SRC C++
-     void foo(std::unique_ptr<int>{new int{5}}, //someother exception throwing);
-     #+END_SRC
-   In the code snippet shown above. the second argument could throw an error
-   + the std::mke_unique was introduced in C++14 to overcome the above issue.
-** std::shared_ptr
-   + The underlying object can be owned by mulitple pointers
-   + The underlying object is destroyed when all the pointers go out of scope
-   + A counter is used to keep track of the number of pointers pointing to the object.
-** std::weak_ptr
-** Guidelines for using Smart Pointers
-   + try to use dynamic memory allocation judiciously
-   + If at all dynamic memory allocation is to be done use smart pointers
+* Section 1
+** Move Semantics
+*** Lvalue and Rvalues
+    + Lvalue in C++ represent physical memory.
+      - They can be used on the left side of expressions
+      - They can be bound to lvalue reference
+	#+BEGIN_SRC C++
+	int a;
+	int &ref = a;
+	#+END_SRC
+      - We can get the address of lvalues
+	#+BEGIN_SRC C++
+	int a;
+	int *addr_a = &a;
+	#+END_SRC
+    + Rvalues represent anything that is not Lvalue
+      - They cannot be used on the left side of expression
+      - We cannot get the address of Rvalues
+      - They cannot be bound to lvalue references but from C++11 they can be bound to rvalue references
+	An exception is that rvalues can be bound to const lvalue references
+	#+BEGIN_SRC C++
+	int &&rval_ref = 5;
+	const int &constant_lval = 5;
+	#+END_SRC
+    + Functions with pass by reference can be overloaded for lvalue and rvalue
+    + If a function takes as argument a const lvalue reference then an lvalue or rvalue can bind to it.
+      This is because a const lvalue reference means that it will not be changed and we only need to read its value
+*** STD::MOVE
+    + This tells the compiler that we would like to move the resources and transfer the complete ownership to the new lvalue.
+    #+BEGIN_SRC C++
+    std::vector<int> v0 = {1,2,3,4,5};
+    std::vector<int v1 = v0;
+    #+END_SRC
+    + The std::move does a static cast of the given variable to an rvalue reference. It is upto the copy constructor or copy assignment operators of the class to take care of properly transfering the resources.
+    + After the move has been performed it is unsafe to use the original variable on which the move was performed.
+    + We should not perform a std::move on return value from a function if it is returning a local variable. However we can do the std::move if the function is returning a member variable.
+      + This is because such a move can mess up return value optimisation
+    + Use the *Pass by Value and Move* idiom instead of overloading functions with sink arguments.
+*** Forwarding references
+** Smart pointer   
+*** std::unique_ptr
+    + This is a smart pointer where the underlying object is owned by a single pointer.
+    + unique pointers do not have the copy constructor or copy assignment operator
+    + It uses the move semantics to transfer ownership
+    + Unique pointers shoule be first created before using them as function arguments.
+      #+BEGIN_SRC C++
+      void foo(std::unique_ptr<int>{new int{5}}, //someother exception throwing);
+      #+END_SRC
+    In the code snippet shown above. the second argument could throw an error
+    + the std::mke_unique was introduced in C++14 to overcome the above issue.
+*** std::shared_ptr
+    + The underlying object can be owned by mulitple pointers
+    + The underlying object is destroyed when all the pointers go out of scope
+    + A counter is used to keep track of the number of pointers pointing to the object.
+*** std::weak_ptr
+*** Guidelines for using Smart Pointers
+    + try to use dynamic memory allocation judiciously
+    + If at all dynamic memory allocation is to be done use smart pointers
