@@ -22,3 +22,12 @@
    #+end_src
 ** Function pointer
    A function pointer is declared with return_type (*ptr)(args....)
+** Memory management
+   stack for local variables
+   data section for global and static
+   heap for allocated at runtime
+** memory allocation for array
+   int *p = new int[5]
+   delete []p;
+** Two Dimensional array
+   Two dimensional arrays are just array of arrays so while freeing the memory take care of deleting the rows independently.
