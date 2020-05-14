@@ -31,3 +31,16 @@
    delete []p;
 ** Two Dimensional array
    Two dimensional arrays are just array of arrays so while freeing the memory take care of deleting the rows independently.
+** default keyword
+   In C++11 we can ask the compiler to create the default copy ctr, ctr, destructor 
+** LValue and RValue
+   Function that returns by value return r value whereas functions that return by reference give lvalues
+   Lvalue ref may bind to rvalue if it is const lvalue ref
+   Rvalue references were introduced to detect temporary objects
+** Rule of 5
+   If user implements any one of the following then it is better to implement the others as well
+   1. Destructor
+   2. Copy Constructor
+   3. Copy assignment operator
+   4. Move Constructor
+   5. Move assignment operator
