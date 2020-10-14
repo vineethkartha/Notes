@@ -1,0 +1,6 @@
+* Introduction
+  - Functions are first calss citizens. Functions can be passed as arguments or can be returned. Essentially they can be treated as data.
+  - Pure functions are functions that do not have any side effects or any hidden IO.
+* Correctness follows from expressiveness
+  - More readable code is more correct code.
+  

@@ -1,0 +1,106 @@
+* Chapter 1: Category: The Essence of Compositions
+** Notes
+*** Category is a collection of objects and arrows
+*** A category should have two basic properties
+    1. Ability to compose associatevely
+       h \circ (g \circ f) = (h \circ g) \circ f = h \circ g \circ f
+    2. Existence of identity function
+       f \circ id_A = f
+** Challenges
+*** Q1
+     #+begin_src cpp
+     #include <iostream>
+     /*template<typename T>
+     T identity(T x) {
+       return x;
+     }*/
+     auto identity = [](auto x) {
+         return x;
+     };
+     
+     int main() {
+         std::cout<<"id(1) = "<< identity(1)<<"\n";
+         std::cout<<"id('a') = "<< identity('a')<<"\n";
+	 return 0;
+     }
+     #+end_src
+
+     #+RESULTS:
+     | id(1)   | = | 1 |
+     | id('a') | = | a |
+
+*** Q2
+    #+begin_src cpp
+    #include<iostream>
+    #include<assert.h>
+    auto compose = [](auto f, auto g) {
+      return [f,g](auto z) {
+        return f(g(z));
+      };
+    };
+    auto square = [](auto x) {
+      return x*x;
+    };
+    auto cube = [](auto x) {
+      return x*x*x;
+    };
+    int main() {
+      auto square_of_cube = compose(square,cube);
+      assert(square_of_cube(2) == 64);
+      std::cout<<"square(cube(2)) = "<<square_of_cube(2)<<"\n";
+      assert(square_of_cube(3) == 729);
+      std::cout<<"square(cube(3)) = "<<square_of_cube(3)<<"\n";
+      return 0;
+    }
+    #+end_src
+
+    #+RESULTS:
+    | square(cube(2)) | = |  64 |
+    | square(cube(3)) | = | 729 |
+*** Q3
+    #+begin_src cpp
+    #include<iostream>
+    #include<assert.h>
+    auto compose = [](auto f, auto g) {
+      return [f,g](auto z) {
+        return f(g(z));
+      };
+    };
+    auto identity = [](auto x) {
+         return x;
+     };
+    auto square = [](auto x) {
+      return x*x;
+    };
+    int main() {
+      auto square_of = compose(square,identity);
+      assert(square_of(2) == 4);
+      std::cout<<"square(id(2)) = "<<square_of(2)<<"\n";
+      assert(square_of(3) == 9);
+      std::cout<<"square(id(3)) = "<<square_of(3)<<"\n";
+      return 0;
+    }
+    #+end_src
+
+    #+RESULTS:
+    | square(id(2)) | = | 4 |
+    | square(id(3)) | = | 9 |
+*** Q4
+    The world wide web is a category with the web page as the objects
+    and the links as the arrows. 
+    1. The www satisfies the identity principle since the link to a
+       page takes us to that page.
+    2. The associativity is satisfied such that if we can get from A
+       -> B and from B -> C then we can reach A -> C
+*** Q5
+    If we consider the people as objects and the friendship as the
+    arrows. This does not form a category.
+    1. The identity principle is not satisfied as A is not a friend of A
+    2. The associativity rule is not satisfied because if A is a
+       friend of B and B is a friend of C does not imply that A is a
+       friend of C
+*** Q6
+    A directed graph will be a category when there is an edge pointing
+    back to each node from itself satisfying the identity principle
+    and when for every node A -> B and  from B-> C there is an edge
+    from A -> C

@@ -47,3 +47,9 @@
 ** Copy Elision
    Compiler can decide to elide certain copy constructor calls. Compiler can avoid creating copy of temp objects
    Suppose the code needs to create a temporary copy which then needs to be passed to a contructor to create a new object the compiler can optimise out the temp object creation and directly call the constructor for the object.
+** Rules of Operator Overloading
+   1. Associativity, precedence are maintained
+   2. Operator functions should be non-static except for new and delete
+   3. atleast one operand must be user defined
+   4. If first operand is primitive then Global overload
+      
