@@ -228,14 +228,14 @@
     Created by extending a given graph by adding min number of arrows
     to satisfy the rules of a category i.e. identity and associativity
 *** Terminologies
-    1. /Preorder/ - There is atmost one arrow going from one object to the other
+    1. /Preorder/ - There is atmost one arrow going from one object to
+       the other. The hom set is either a singleton or empty
     2. /Partial/ - There cannot be arrows going in two directions from
-       any two given objects
+       any two given objects. There cannot be cycles in partial order
     3. /Total order/ - For every two objects in the category there is an
-       arrow
+       arrow. 
     4. /hom-set/ A set of morphisms from object /a/ to object /b/ in a
        category /C/ is called a *hom-set*  Hom_C(a,b)
-    5. Every hom-set in a preorder is either empty or a singleton
 *** Monoid
     + Monoid is a set with a binary operation where the operation
       is associative and there is one special element that behaves like unit.
@@ -248,4 +248,32 @@
       in the set M(m,m)
 ** Challenges
 *** Q1
+    1. For a graph with one node and no edges, add the identity edge
+       to make it a free category
+    2. For a graph with one node and one edge, given that the edge is
+       composable then we need to add arrows to meet the composability
+    3. Graph with two nodes and a single arrow between them -add the
+       identity arrows at each node.
+    4. 
+    
+*** Q2
+    1. For each a->b if b->a is also true then a = b hence this is a
+       partial order category. Where -> is the inclusion relation.
+    2. The set is set of all C++ types and the morphism is the
+       subtyping relation. This is also a partial order because if a
+       is subtype of b and b is subtype of a then a and b are the
+       same. Also there are types in C++ that are not related.
+*** Q3 
+    Bool ={True, False}
+    1. With the AND operation , together with the Bool set forms a
+       monoid. Here the The AND operation is associative i.e a &&
+       (b&&c) = (a&& b) && c
+       Also the value True is the Unit element for and operation 
+       a && True = a
+    2. With the OR operation together with the Bool set forms a monoid
+       since OR is associative and the unit element is False
+       a || false = a
+*** Q4
+    To be answered
+* Chapter 4: Kleisli Categories
     
