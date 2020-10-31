@@ -1,0 +1,24 @@
+* What is AUTOSAR
+  1. Automotive Open System Architecture
+  2. It standardizes the Architecture, Methodology and the interface
+     * In architecture the standardization is for the modules and how
+       they are placed and their responsibility
+     * Methodology deals with file formats and the flow till final hex
+       is generated
+     * Interfaces deals with how the modules interact with each other.
+* Architecture
+  1. The level of modularity of the basic software is termed as ICC
+     (confromations classes)
+     * Basic software is a piece of code that does not provide any
+       feature on its own but is an essential part to a feature.
+  2. ICC1
+     [[./icc1.png]]
+     * ICC1 is a layered architecture
+  3. ICC2
+     [[./icc2.png]]
+     * In ICC2 we include stacks which also segragate the functionality
+  4. ICC3
+     [[./icc3.png]]
+     
+
+
