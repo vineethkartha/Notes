@@ -6,6 +6,7 @@
        h \circ (g \circ f) = (h \circ g) \circ f = h \circ g \circ f
     2. Existence of identity function
        f \circ id_A = f
+*** OOP hides mutation and shares data with pointers which causes problems for concurrent programming
 ** Challenges
 *** Q1
     #+begin_src cpp
@@ -119,6 +120,13 @@
 *** Pure & Dirty Functions
     A pure function is one that always produces the same result given
     the same input and does not have any side effects.
+*** Functions
+    1. Domain the set from which arguments are given to function
+    2. CoDomain -  the set in which the return values of a fucntion
+       are present
+    3. Image - the subset of the co domain which contains the values
+       corresponding to each element of Domain when the function is applied
+    4. Isomorphism is invertible function
 ** Challenges
 *** Q1
     #+begin_src cpp

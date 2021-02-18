@@ -19,6 +19,20 @@
      * In ICC2 we include stacks which also segragate the functionality
   4. ICC3
      [[./icc3.png]]
-     
+  5. ASW - Application Software Component
+     This is the component for each feature in the system, independent
+     of the hardware
+  6. BSW - Base Software Component
+     This is the component that manages the hardware resources,
+     depends on the hardware, mostly consists of things like device drivers
+  7. P-Ports are provider ports which give the date
+  8. R-Ports are receiver ports which accept the data
+* Methodology     
+  1. Get requirements
+  2. Update configs (ARXML)
+  3. Validate and generate files
+  4. Manual Coding
+  5. Compilation
+
 
 
